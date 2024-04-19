@@ -1,29 +1,8 @@
-/* eslint-disable */
-/*!
-  _   _  ___  ____  ___ ________  _   _   _   _ ___   
- | | | |/ _ \|  _ \|_ _|__  / _ \| \ | | | | | |_ _| 
- | |_| | | | | |_) || |  / / | | |  \| | | | | || | 
- |  _  | |_| |  _ < | | / /| |_| | |\  | | |_| || |
- |_| |_|\___/|_| \_\___/____\___/|_| \_|  \___/|___|
-                                                                                                                                                                                                                                                                                                                                       
-=========================================================
-* Horizon UI - v1.1.0
-=========================================================
-
-* Product Page: https://www.horizon-ui.com/
-* Copyright 2023 Horizon UI (https://www.horizon-ui.com/)
-
-* Designed and Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
 import React from "react";
+
 import { NavLink } from "react-router-dom";
 // Chakra imports
+
 import {
   Box,
   Button,
@@ -47,9 +26,12 @@ import illustration from "assets/img/auth/auth.png";
 import { FcGoogle } from "react-icons/fc";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
+import axios from "axios";
 
 function SignIn() {
   // Chakra color mode
+  const [email, setEmail] = React.useState();
+  const [password, setPassword] = React.useState();
   const textColor = useColorModeValue("navy.700", "white");
   const textColorSecondary = "gray.400";
   const textColorDetails = useColorModeValue("navy.700", "secondaryGray.600");
@@ -67,8 +49,26 @@ function SignIn() {
   );
   const [show, setShow] = React.useState(false);
   const handleClick = () => setShow(!show);
+  const verifyLogin = async() => {
+    try{
+        const data = {email,password}
+        console.log(data);
+        const res  = await axios.post('http://localhost:5000/api/User/login',data);
+        console.log(res.data);
+        localStorage.setItem('type',JSON.stringify(res.data.user.userType));
+        window.location.href = '/';
+        alert('Login Successful');
+    }catch(err){
+        alert('Invalid Credentials');
+    }
+  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    verifyLogin();
+  }
+
   return (
-    <DefaultAuth illustrationBackground={illustration} image={illustration}>
+    <DefaultAuth illustrationBackground={"https://img.freepik.com/free-vector/warehouse-elements-background_1268-1331.jpg?w=740&t=st=1713525800~exp=1713526400~hmac=9eb9fb241539e5241e12ddda5aacda7e9367333b4fa10347a62ce1e2c382eb81"} >
       <Flex
         maxW={{ base: "100%", md: "max-content" }}
         w='100%'
@@ -142,8 +142,10 @@ function SignIn() {
               variant='auth'
               fontSize='sm'
               ms={{ base: "0px", md: "0px" }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               type='email'
-              placeholder='mail@simmmple.com'
+              placeholder='mail@softChain.com'
               mb='24px'
               fontWeight='500'
               size='lg'
@@ -160,6 +162,8 @@ function SignIn() {
               <Input
                 isRequired={true}
                 fontSize='sm'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder='Min. 8 characters'
                 mb='24px'
                 size='lg'
@@ -207,7 +211,8 @@ function SignIn() {
               fontWeight='500'
               w='100%'
               h='50'
-              mb='24px'>
+              mb='24px'
+              onClick={handleSubmit}>
               Sign In
             </Button>
           </FormControl>

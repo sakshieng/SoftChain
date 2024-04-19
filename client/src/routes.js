@@ -17,7 +17,7 @@ import DataTables from "views/admin/dataTables";
 
 // Auth Imports
 import SignInCentered from "views/auth/signIn";
-
+const user = JSON.parse(localStorage.getItem('type'));
 const routes = [
   {
     name: "Main Dashboard",
@@ -41,6 +41,20 @@ const routes = [
     component: NFTMarketplace,
     secondary: true,
   },
+  // {
+  //   name: "All Requests",
+  //   layout: "/admin",
+  //   icon: <Icon as={MdBarChart} width='20px' height='20px' color='inherit' />,
+  //   path: "/data-tables",
+  //   component: DataTables,
+  // },
+  // {
+  //   name: "Profile",
+  //   layout: "/admin",
+  //   path: "/profile",
+  //   icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
+  //   component: Profile,
+  // },
   {
     name: "All Requests",
     layout: "/admin",
@@ -48,21 +62,23 @@ const routes = [
     path: "/data-tables",
     component: DataTables,
   },
-  {
-    name: "Profile",
-    layout: "/admin",
-    path: "/profile",
-    icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
-    component: Profile,
-  },
-  {
+  // {
+  //   name: "Sign In",
+  //   layout: "/auth",
+  //   path: "/sign-in",
+  //   icon: <Icon as={MdLock} width='20px' height='20px' color='inherit' />,
+  //   component: SignInCentered,
+  // },
+  
+];
+
+if(!user){
+  routes.push({
     name: "Sign In",
     layout: "/auth",
     path: "/sign-in",
     icon: <Icon as={MdLock} width='20px' height='20px' color='inherit' />,
     component: SignInCentered,
-  },
-  
-];
-
+  })
+}
 export default routes;
