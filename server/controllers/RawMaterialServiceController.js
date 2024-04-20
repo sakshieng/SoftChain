@@ -1,7 +1,7 @@
 const RawMaterialService = require('../models/RawMaterialService');
 const {RMJConnector} = require('../utils/RawMaterialJourney')
 const {timestampToDate} = require('../utils/converter')
-
+const MessageService = require('../models/MessageService');
 const createRawMaterial = async (req, res) => {
     try{
         const {name, MateriaID, description, PricePerUnit, Quantity, SupplierID, ExpiryDate, Status} = req.body;
@@ -47,7 +47,8 @@ const updateRawMaterial = async (req, res) => {
 
 const deleteRawMaterial = async (req, res) => {
     try{
-        await RawMaterialService.findByIdAndDelete(req.params.materialId);
+        const MateriaID = req.params.materialId;
+            await RawMaterialService.deleteOne({MateriaID});
         res.status(200).json({message: 'Raw Material Deleted Successfully'});
     }catch(err){
         console.log(err);
@@ -89,6 +90,17 @@ const addRawMaterialJourney = async (req, res) => {
         return res.status(500).json({message: err.message});
     }
 };
+const getMessages = async (req, res) => {
+    try{
+        console.log("hello");
+        const messages = await MessageService.find();
+        console.log(messages);
+        res.status(200).json(messages);
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({message: err.message});
+    }
+}
 module.exports = {
     createRawMaterial,
     getRawMaterials,
@@ -96,5 +108,6 @@ module.exports = {
     updateRawMaterial,
     deleteRawMaterial,
     getRawMaterialJourney,
-    addRawMaterialJourney
+    addRawMaterialJourney,
+    getMessages
 }

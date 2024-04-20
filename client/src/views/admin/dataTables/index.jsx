@@ -30,40 +30,57 @@ import {
   FormErrorMessage,
 } from "@chakra-ui/react";
 import axios from "axios";
+import { Checkbox } from "@chakra-ui/react/dist/chakra-ui-react.cjs";
 
 export default function Marketplace() {
+  const user = JSON.parse(localStorage.getItem("type"));
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const textColorBrand = useColorModeValue("brand.400", "white");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    id: "",
-    description: "",
-    pricePerUnit: 0,
-    quantity: 0,
-    supplierId: "",
-    expiryDate: "",
+    message: "",
+    sender: "",
+    receiver: "",
+    Date: "",
+    MaterialID: "",
+    Quantity: 0,
+    updatedAt: "",
+    status: "", // Include status in formData
   });
   const [tableData, setTableData] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState([]);
+  const [readMessages, setReadMessages] = useState([]);
 
   useEffect(() => {
     async function getData() {
       try {
-        const res = await axios.get('http://localhost:5000/api/RawMaterial');
-        const data = res.data.map(item => ({
-          name: item.name,
-          id: item.MateriaID,
-          description: item.description,
-          pricePerUnit: item.PricePerUnit,
-          quantity: item.Quantity,
-          supplierId: item.SupplierID,
-          expiryDate: item.ExpiryDate.substring(0, 10), // Extract yyyy-mm-dd
+        const res = await axios.get(
+          "http://localhost:5000/api/RawMaterial/messages"
+        );
+        const data = res.data.map((item) => ({
+          _id: item._id,
+          message: item.message,
+          sender: item.sender,
+          receiver: item.receiver,
+          Date: item.Date.substring(0, 10), // Extract yyyy-mm-dd
+          MaterialID: item.MaterialID,
+          Quantity: item.Quantity,
+          updatedAt: item.updatedAt.substring(0, 10), // Extract yyyy-mm-dd
+          status: item.status,
         }));
-        setTableData(data); // Update table data state with fetched data
+        setTableData(data);
+        
+        // Filter messages based on status
+        const unread = data.filter((item) => item.status === "unread");
+        const read = data.filter((item) => item.status === "read");
+        setUnreadMessages(unread);
+        setReadMessages(read);
+        
+        console.log(data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
-    };
+    }
     getData();
   }, []);
 
@@ -91,79 +108,144 @@ export default function Marketplace() {
     }));
   };
 
-  async function submitData(data){
-    try{
-      const res = await axios.post('http://localhost:5000/api/RawMaterial/create', data);
-      console.log("Data submitted successfully:", res.data); 
-    }catch(error){
+  async function submitData(data) {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/Inventory/createMessage",
+        data
+      );
+      console.log("Data submitted successfully:", res.data);
+    } catch (error) {
       console.error("Error submitting data:", error);
       alert("Error submitting data");
     }
   }
+  
   const handleSaveButtonClick = (e) => {
     e.preventDefault();
     setTableData((prevData) => [...prevData, formData]);
     const data = {
-      name: formData.name,
-      MateriaID: formData.id,
-      description: formData.description,
-      PricePerUnit: formData.pricePerUnit,
-      Quantity: formData.quantity,
-      SupplierID: formData.supplierId,
-      ExpiryDate: formData.expiryDate.substring(0, 10), // Extract yyyy-mm-dd
-    }
+      message: formData.message,
+      sender: formData.sender,
+      receiver: formData.receiver,
+      Date: formData.Date.substring(0, 10), // Extract yyyy-mm-dd
+      MaterialID: formData.MaterialID,
+      Quantity: formData.Quantity,
+      updatedAt: formData.updatedAt.substring(0, 10), // Extract yyyy-mm-dd
+      status: formData.status,
+    };
     submitData(data);
     setIsModalOpen(false);
   };
+  const setStatus = async (id, status) => {
+    try {
+      const data = {status};
+      const res = await axios.post(`http://localhost:5000/api/Inventory/updatestatus/${id}`,data);
+      console.log("Data submitted successfully:", res.data);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("Error submitting data");
+    }
+  }
 
+  const handleMarkMessage = (e, id, status) => {
+    e.preventDefault();
+    setStatus(id, status);
+  }
   return (
-    <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-      <Stack spacing={4} direction="row" align="center">
-        <Button size="md" backgroundColor={textColorBrand} color={"white"} onClick={handleCreateButtonClick}>Add Item</Button>
-      </Stack>
-
-      <Table variant="striped" color={textColor} size="md" mt={4}>
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>ID</Th>
-            <Th>Description</Th>
-            <Th>Price per Unit</Th>
-            <Th>Quantity</Th>
-            <Th>Supplier ID</Th>
-            <Th>Expiry Date</Th>
-            <Th>Update</Th>
-            <Th>Delete</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {tableData.map((item, index) => (
-            <Tr key={index}>
-              <Td>{item.name}</Td>
-              <Td>{item.id}</Td>
-              <Td>{item.description}</Td>
-              <Td>{item.pricePerUnit}</Td>
-              <Td>{item.quantity}</Td>
-              <Td>{item.supplierId}</Td>
-              <Td>{item.expiryDate}</Td>
-              <Td>
-                <EditIcon
-                  color="blue.500"
-                  cursor="pointer"
-                  onClick={() => handleEditButtonClick(index)}
-                />
-              </Td>
-              <Td>
-                <DeleteIcon
-                  color="red.500"
-                  cursor="pointer"
-                  onClick={() => handleDeleteButtonClick(index)}
-                />
-              </Td>
+    <Flex pt={{ base: "180px", md: "80px", xl: "80px" }}>
+      <Box w="100%">
+        <Stack spacing={4} direction="row" align="center">
+          {user !== "Supplier" && (
+            <Button
+              size="md"
+              backgroundColor={textColorBrand}
+              color={"white"}
+              onClick={handleCreateButtonClick}
+            >
+              Add Request
+            </Button>
+          )}
+        </Stack>
+        <Text color={textColorBrand} style={{marginTop:'10px',fontSize:'28px' , fontWeight:'bold'}}>Pending</Text>
+    
+        <Table variant="striped" color={textColor} size="md" mt={4} >
+          <Thead>
+            <Tr>
+              <Th>Mark as Read</Th>
+              <Th>Message</Th>
+              <Th>Sender</Th>
+              <Th>Receiver</Th>
+              <Th>Date</Th>
+              <Th>Material ID</Th>
+              <Th>Quantity</Th>
+              <Th>Updated At</Th>
+              <Th>Delete</Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody>
+            {unreadMessages.map((item, index) => (
+              <Tr key={index}>
+                <Td> <Checkbox style={{border:'1px solid black', borderRadius:'5px'}} onChange={(e)=>{
+                  console.log("hello");
+                  handleMarkMessage(e, item._id, 'read');
+                }}/> </Td> 
+                <Td>{item.message}</Td>
+                <Td>{item.sender}</Td>
+                <Td>{item.receiver}</Td>
+                <Td>{item.Date}</Td>
+                <Td>{item.MaterialID}</Td>
+                <Td>{item.Quantity}</Td>
+                <Td>{item.updatedAt}</Td>
+                <Td>
+                  <DeleteIcon
+                    color="red.500"
+                    cursor="pointer"
+                    onClick={() => handleDeleteButtonClick(index)}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+        
+        <Text color={textColorBrand} style={{marginTop:'80px',fontSize:'28px' , fontWeight:'bold'}}>Approved</Text>
+        <Table variant="striped" color={textColor} size="md" style={{marginTop:'10px'}}>
+          <Thead>
+            <Tr>
+              <Th>Message</Th>
+              <Th>Sender</Th>
+              <Th>Receiver</Th>
+              <Th>Date</Th>
+              <Th>Material ID</Th>
+              <Th>Quantity</Th>
+              <Th>Updated At</Th>
+              <Th>Delete</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {readMessages.map((item, index) => (
+              <Tr key={index}>
+                <Td>{item.message}</Td>
+                <Td>{item.sender}</Td>
+                <Td>{item.receiver}</Td>
+                <Td>{item.Date}</Td>
+                <Td>{item.MaterialID}</Td>
+                <Td>{item.Quantity}</Td>
+                <Td>{item.updatedAt}</Td>
+                <Td>
+                  <DeleteIcon
+                    color="red.500"
+                    cursor="pointer"
+                    onClick={() => handleDeleteButtonClick(index)}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Box>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <ModalOverlay />
@@ -171,72 +253,82 @@ export default function Marketplace() {
           <ModalHeader>Add New Item</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl  isRequired>
-              <FormLabel>Name</FormLabel>
+            <FormControl isRequired>
+              <FormLabel>Message</FormLabel>
               <Input
-                placeholder="Enter name"
-                name="name"
-                value={formData.name}
+                placeholder="Enter message"
+                name="message"
+                value={formData.message}
                 onChange={handleInputChange}
               />
             </FormControl>
             <FormControl isRequired mt={4}>
-              <FormLabel>ID</FormLabel>
+              <FormLabel>Sender</FormLabel>
               <Input
-                placeholder="Enter ID"
-                name="id"
-                value={formData.id}
+                placeholder="Enter sender"
+                name="sender"
+                value={formData.sender}
+                onChange={handleInputChange}
+              />
+            </FormControl>
+            <FormControl isRequired mt={4}>
+              <FormLabel>Receiver</FormLabel>
+              <Input
+                placeholder="Enter receiver"
+                name="receiver"
+                value={formData.receiver}
                 onChange={handleInputChange}
               />
             </FormControl>
             <FormControl mt={4}>
-              <FormLabel>Description</FormLabel>
-              <Textarea
-                placeholder="Enter description"
-                name="description"
-                value={formData.description}
+              <FormLabel>Date</FormLabel>
+              <Input
+                type="date"
+                name="Date"
+                value={formData.Date}
                 onChange={handleInputChange}
               />
             </FormControl>
             <FormControl isRequired mt={4}>
-              <FormLabel>Price per Unit</FormLabel>
-              <NumberInput defaultValue={0}>
-                <NumberInputField
-                  placeholder="Enter price per unit"
-                  name="pricePerUnit"
-                  value={formData.pricePerUnit}
-                  onChange={handleInputChange}
-                />
-              </NumberInput>
+              <FormLabel>Material ID</FormLabel>
+              <Input
+                placeholder="Enter material ID"
+                name="MaterialID"
+                value={formData.MaterialID}
+                onChange={handleInputChange}
+              />
             </FormControl>
             <FormControl isRequired mt={4}>
               <FormLabel>Quantity</FormLabel>
               <NumberInput defaultValue={0}>
                 <NumberInputField
                   placeholder="Enter quantity"
-                  name="quantity"
-                  value={formData.quantity}
+                  name="Quantity"
+                  value={formData.Quantity}
                   onChange={handleInputChange}
                 />
               </NumberInput>
             </FormControl>
-            <FormControl isRequired mt={4}>
-              <FormLabel>Supplier ID</FormLabel>
+            <FormControl mt={4}>
+              <FormLabel>Updated At</FormLabel>
               <Input
-                placeholder="Enter supplier ID"
-                name="supplierId"
-                value={formData.supplierId}
+                type="date"
+                name="updatedAt"
+                value={formData.updatedAt}
                 onChange={handleInputChange}
               />
             </FormControl>
             <FormControl mt={4}>
-              <FormLabel>Expiry Date</FormLabel>
-              <Input
-                type="date"
-                name="expiryDate"
-                value={formData.expiryDate}
+              <FormLabel>Status</FormLabel>
+              <Select
+                placeholder="Select status"
+                name="status"
+                value={formData.status}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </Select>
             </FormControl>
           </ModalBody>
 
@@ -247,10 +339,9 @@ export default function Marketplace() {
             <Button colorScheme="blue" mr={3} onClick={handleCloseModal}>
               Close
             </Button>
-            
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Box>
+    </Flex>
   );
 }
